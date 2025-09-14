@@ -18,7 +18,6 @@ public class UserDTO {
     private String phone;
     private boolean enabled;
     private List<String> roles;
-    private List<String> subjects;
 
     public UserDTO(Long id, String username, String email, String name, String phone) {
         this.id = id;
@@ -45,17 +44,6 @@ public class UserDTO {
         this.phone = phone;
         this.enabled = enabled;
         this.roles = roles;
-    }
-
-    public UserDTO(Long id, String username, String email, String name, String phone, boolean enabled, List<String> roles, List<String> subjects) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.name = name;
-        this.phone = phone;
-        this.enabled = enabled;
-        this.roles = roles;
-        this.subjects = subjects;
     }
 
     public static UserDTO fromEntity(User user) {

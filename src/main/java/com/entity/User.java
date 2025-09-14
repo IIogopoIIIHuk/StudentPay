@@ -32,8 +32,9 @@ public class User {
     @Column(name = "phone")
     private String phone;
 
+    // траим true поставить чтобы не убирать параметр
     @Column(name = "enabled")
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     @ManyToMany
     @JoinTable(
