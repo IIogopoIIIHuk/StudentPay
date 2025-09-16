@@ -14,12 +14,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RoleService {
+
     private final RoleRepository roleRepository;
 
-
-
     public Role getUserRole(){
-        return roleRepository.findByName("ROLE_USER") // заменить roleName на "ROLE_USER"
+        return roleRepository.findByName("ROLE_USER")
                 .orElseThrow(() -> new NoSuchElementException("Role not found in database"));
     }
 

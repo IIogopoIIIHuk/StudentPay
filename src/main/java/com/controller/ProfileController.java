@@ -109,7 +109,6 @@ public class ProfileController {
             UserDetails userDetails = userService.loadUserByUsername(user.getUsername());
             String newToken = jwtTokenUtils.generateToken(userDetails);
 
-            // Формируем окончательный ответ с токеном в формате как на скриншоте
             Map<String, Object> response = new HashMap<>();
             response.put("phone", user.getPhone());
             response.put("roles", userInfo.get("roles"));
