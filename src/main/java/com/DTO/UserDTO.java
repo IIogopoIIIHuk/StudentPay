@@ -17,6 +17,8 @@ public class UserDTO {
     private String name;
     private String phone;
     private boolean enabled;
+    private boolean isBrsmMember;
+    private boolean isProfkomMember;
     private List<String> roles;
 
     public UserDTO(Long id, String username, String email, String name, String phone) {
@@ -46,6 +48,18 @@ public class UserDTO {
         this.roles = roles;
     }
 
+    public UserDTO(Long id, String username, String email, String name, String phone, boolean enabled, boolean isBrsmMember, boolean isProfkomMember, List<String> roles) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.name = name;
+        this.phone = phone;
+        this.enabled = enabled;
+        this.isBrsmMember = isBrsmMember;
+        this.isProfkomMember = isProfkomMember;
+        this.roles = roles;
+    }
+
     public static UserDTO fromEntity(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
@@ -54,6 +68,8 @@ public class UserDTO {
         dto.setName(user.getName());
         dto.setPhone(user.getPhone());
         dto.setEnabled(user.isEnabled());
+        dto.setBrsmMember(user.isBrsmMember());
+        dto.setProfkomMember(user.isProfkomMember());
         dto.setRoles(user.getRoles().stream().map(r -> r.getName()).toList());
         return dto;
     }

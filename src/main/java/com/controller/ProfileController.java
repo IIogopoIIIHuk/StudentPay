@@ -88,7 +88,6 @@ public class ProfileController {
 
         userRepository.save(user);
 
-        // Формируем информацию о пользователе как в /me
         List<String> roles = user.getRoles().stream()
                 .map(Role::getName)
                 .toList();

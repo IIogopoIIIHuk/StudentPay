@@ -76,6 +76,9 @@ public class SecurityConfig {
                                 "/stats/**"
                         ).permitAll()
                         .requestMatchers("/img/**").permitAll()
+                        .requestMatchers("/dean/**").hasRole("DEAN_EMPLOYEE")
+                        .requestMatchers("/accountant/**").hasRole("ACCOUNTANT")
+                        .requestMatchers("/student/**").hasRole("USER")
                         .requestMatchers(
                                 "/groups/**",
                                 "/reservations/**",

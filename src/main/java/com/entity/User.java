@@ -3,9 +3,7 @@ package com.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Data
 @Table(name = "users")
@@ -32,9 +30,17 @@ public class User {
     @Column(name = "phone")
     private String phone;
 
-    // траим true поставить чтобы не убирать параметр
     @Column(name = "enabled")
     private boolean enabled = true;
+
+    @Column(name = "is_brsm_member")
+    private boolean isBrsmMember = false;
+
+    @Column(name = "is_profkom_member")
+    private boolean isProfkomMember = false;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private StudentDetails studentDetails;
 
     @ManyToMany
     @JoinTable(
@@ -44,16 +50,4 @@ public class User {
     )
     private Collection<Role> roles;
 
-    /*@ManyToOne
-    @JoinColumn(name = "group_id")
-    private UserGroup group;
-
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Subject> subjects = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Absence> absences = new ArrayList<>();
-
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Note> notes = new ArrayList<>();   */
 }

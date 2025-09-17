@@ -1,10 +1,10 @@
 package com.service;
 
-
 import com.DTO.RegistrationUserDTO;
+import com.entity.StudentDetails;
 import com.entity.User;
-import com.entity.Role;
 import com.repo.UserRepository;
+import com.repo.StudentDetailsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,6 +27,7 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleService roleService;
     private final PasswordEncoder passwordEncoder;
+    private final StudentDetailsRepository studentDetailsRepository;
 
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
@@ -36,7 +37,7 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email);
     }
 
-
+    @Transactional
     public User createNewUser(RegistrationUserDTO registrationUserDto) {
         User user = new User();
         user.setUsername(registrationUserDto.getUsername());
@@ -45,7 +46,18 @@ public class UserService implements UserDetailsService {
         user.setName(registrationUserDto.getName());
         user.setPhone(registrationUserDto.getPhone());
         user.setRoles(List.of(roleService.getUserRole()));
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if (savedUser.getRoles().stream().anyMatch(role -> "ROLE_USER".equals(role.getName()))) {
+            StudentDetails details = new StudentDetails(savedUser);
+            studentDetailsRepository.save(details);
+        }
+
+        return savedUser;
+    }
+
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
 
     @Transactional
@@ -59,8 +71,7 @@ public class UserService implements UserDetailsService {
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
 
-        log.info("Роли пользователя в UserDetails: {}", authorities); // Логируем роли
-
+        log.info("Роли пользователя в UserDetails: {}", authorities);
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),

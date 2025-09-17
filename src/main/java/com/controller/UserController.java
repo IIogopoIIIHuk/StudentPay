@@ -1,12 +1,13 @@
 package com.controller;
 
 import com.DTO.UserDTO;
-import com.entity.User;
 import com.entity.Role;
+import com.entity.User;
 import com.repo.RoleRepository;
 import com.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -33,6 +34,8 @@ public class UserController {
             userDTO.setName(user.getName());
             userDTO.setPhone(user.getPhone());
             userDTO.setEnabled(user.isEnabled());
+            userDTO.setBrsmMember(user.isBrsmMember());
+            userDTO.setProfkomMember(user.isProfkomMember());
 
             List<String> roles = user.getRoles().stream()
                     .map(Role::getName)
@@ -45,7 +48,8 @@ public class UserController {
     }
 
     @PutMapping("/editRole/{id}")
-    public ResponseEntity<?> editUser(@PathVariable Long id, @RequestParam String roleName) {
+    @PreAuthorize("hasRole('ROLE_DEAN_EMPLOYEE')")
+    public ResponseEntity<?> editUserRole(@PathVariable Long id, @RequestParam String roleName) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
@@ -53,6 +57,29 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("Роль не найдена"));
 
         user.setRoles(new ArrayList<>(List.of(role)));
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(toUserDTO(user));
+    }
+
+    @PutMapping("/editStudent/{id}")
+    @PreAuthorize("hasRole('ROLE_DEAN_EMPLOYEE')")
+    public ResponseEntity<?> editStudentDetails(@PathVariable Long id, @RequestBody UserDTO userDTO) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        if (userDTO.getName() != null && !userDTO.getName().isEmpty()) {
+            user.setName(userDTO.getName());
+        }
+        if (userDTO.getPhone() != null && !userDTO.getPhone().isEmpty()) {
+            user.setPhone(userDTO.getPhone());
+        }
+        if (userDTO.isEnabled() != user.isEnabled()) {
+            user.setEnabled(userDTO.isEnabled());
+        }
+        user.setBrsmMember(userDTO.isBrsmMember());
+        user.setProfkomMember(userDTO.isProfkomMember());
 
         userRepository.save(user);
 
@@ -99,10 +126,11 @@ public class UserController {
         userDTO.setName(user.getName());
         userDTO.setPhone(user.getPhone());
         userDTO.setEnabled(user.isEnabled());
+        userDTO.setBrsmMember(user.isBrsmMember());
+        userDTO.setProfkomMember(user.isProfkomMember());
         userDTO.setRoles(user.getRoles().stream()
                 .map(Role::getName)
                 .collect(Collectors.toList()));
-
 
         return userDTO;
     }

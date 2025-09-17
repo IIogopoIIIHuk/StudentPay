@@ -12,10 +12,6 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-
-    @Query("SELECT a FROM User a WHERE LOWER(a.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    List<User> findByNameContaining(@Param("name")String name);
-
     Optional<User> findByUsername(String username);
 
     Optional<User> findByEmail(String email);
@@ -23,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
     List<User> findByRoleName(@Param("roleName") String roleName);
 
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName AND LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<User> findByNameContaining(@Param("roleName") String roleName, @Param("name") String name);
 }
