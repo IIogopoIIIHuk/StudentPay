@@ -1,7 +1,9 @@
 package com.service;
 
 import com.DTO.ApplicationDTO;
+import com.DTO.CreateApplicationDTO;
 import com.entity.Application;
+import com.entity.User;
 import com.repo.ApplicationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,24 +19,29 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final UserService userService;
 
+
+
     @Transactional
-    public ApplicationDTO createApplication(Long studentId, Integer month, Integer year) {
+    public ApplicationDTO createApplication(Long studentId, CreateApplicationDTO createApplicationDTO) {
         Application application = new Application();
         application.setStudent(userService.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found")));
-        application.setMonthOfRequest(month);
-        application.setYearOfRequest(year);
+        application.setMonthOfRequest(createApplicationDTO.getMonth());
+        application.setYearOfRequest(createApplicationDTO.getYear());
         Application savedApplication = applicationRepository.save(application);
         return ApplicationDTO.fromEntity(savedApplication);
     }
 
+
+    // Новый метод
     public List<ApplicationDTO> getAllApplications() {
         return applicationRepository.findAll().stream()
                 .map(ApplicationDTO::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    public List<ApplicationDTO> getStudentApplications(Long studentId) {
+    // Новый метод
+    public List<ApplicationDTO> getApplicationsByStudentId(Long studentId) {
         return applicationRepository.findByStudentId(studentId).stream()
                 .map(ApplicationDTO::fromEntity)
                 .collect(Collectors.toList());

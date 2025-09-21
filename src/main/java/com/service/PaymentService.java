@@ -12,13 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -37,7 +35,6 @@ public class PaymentService {
         return paymentRepository.findByPaymentDateBetween(startOfMonth, endOfMonth).isPresent();
     }
 
-    // Алгоритм кнопки "Расчет"
     @Transactional
     public PaymentDTO calculateAndCreateMonthlyPayment() {
         if (hasPaymentForCurrentMonth()) {
@@ -57,19 +54,18 @@ public class PaymentService {
         for (User student : students) {
             StudentDetails details = student.getStudentDetails();
             if (details == null || !details.getHasStipend()) {
-                continue; // Пропускаем студентов, у которых нет стипендии
+                continue;
             }
 
             Optional<Stipend> stipendOptional = stipendService.findByTypeName(details.getStipendType());
             if (stipendOptional.isEmpty()) {
-                continue; // Пропускаем, если тип стипендии не найден
+                continue;
             }
             Stipend stipend = stipendOptional.get();
 
             double amount = stipend.getAmount();
             double bonus = details.getBonusAmount();
 
-            // Расчет вычетов, если студент состоит в организациях
             double profkomDeduction = 0.0;
             if (student.isProfkomMember()) {
                 profkomDeduction = amount * (settings.getProfkomDeductionPercent() / 100);
@@ -80,7 +76,6 @@ public class PaymentService {
                 brsmDeduction = amount * (settings.getBrsmDeductionPercent() / 100);
             }
 
-            // Итоговая стипендия: Размер стипендии + Премия - Вычеты
             double finalAmount = amount + bonus - profkomDeduction - brsmDeduction;
 
             StudentPayment studentPayment = new StudentPayment();
@@ -125,6 +120,31 @@ public class PaymentService {
     public Optional<PaymentDTO> getPaymentDetails(Long paymentId) {
         return paymentRepository.findById(paymentId)
                 .map(PaymentDTO::fromEntity);
+    }
+
+    public List<PaymentDTO> getPaymentsByDate(int month, int year) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startOfMonth = yearMonth.atDay(1);
+        LocalDate endOfMonth = yearMonth.atEndOfMonth();
+        return paymentRepository.findAllByPaymentDateBetween(startOfMonth, endOfMonth).stream()
+                .map(PaymentDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<PaymentDTO> getMyPaymentsByDate(Long studentId, int month, int year) {
+        List<PaymentDTO> allPayments = getPaymentsByDate(month, year);
+        return allPayments.stream()
+                .filter(paymentDTO -> paymentDTO.getStudentPayments().stream()
+                        .anyMatch(sp -> sp.getStudentId().equals(studentId)))
+                .collect(Collectors.toList());
+    }
+
+    public List<PaymentDTO> getAllMyPayments(Long studentId) {
+        return paymentRepository.findAll().stream()
+                .filter(payment -> payment.getStudentPayments() != null &&
+                        payment.getStudentPayments().stream().anyMatch(sp -> sp.getStudent().getId().equals(studentId)))
+                .map(PaymentDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Transactional
