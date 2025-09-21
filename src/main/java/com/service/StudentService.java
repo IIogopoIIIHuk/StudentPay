@@ -72,6 +72,14 @@ public class StudentService {
         return StudentDataDTO.fromUserAndDetails(user);
     }
 
+    // Добавляем новый метод в com.service.StudentService.java
+    public StudentDataDTO getStudentById(Long id) {
+        return userRepository.findById(id)
+                .filter(user -> user.getRoles().stream().anyMatch(role -> "ROLE_USER".equals(role.getName())))
+                .map(StudentDataDTO::fromUserAndDetails)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+    }
+
     public List<StudentDataDTO> findStudentsByName(String name) {
         List<User> users = userRepository.findByNameContaining("ROLE_USER", name);
         return users.stream()

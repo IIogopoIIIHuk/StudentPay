@@ -1,6 +1,7 @@
 package com.service;
 
 import com.DTO.RegistrationUserDTO;
+import com.DTO.StudentDataDTO;
 import com.entity.StudentDetails;
 import com.entity.User;
 import com.repo.UserRepository;
@@ -56,9 +57,6 @@ public class UserService implements UserDetailsService {
         return savedUser;
     }
 
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
-    }
 
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

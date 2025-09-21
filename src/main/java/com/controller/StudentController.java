@@ -30,6 +30,13 @@ public class StudentController {
         return ResponseEntity.ok(studentData);
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
+    public ResponseEntity<StudentDataDTO> getStudentById(@PathVariable Long id) {
+        StudentDataDTO student = studentService.getStudentById(id);
+        return ResponseEntity.ok(student);
+    }
+
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
     public ResponseEntity<List<StudentDataDTO>> searchStudentsByName(@RequestParam String name) {
