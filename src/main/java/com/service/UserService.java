@@ -38,6 +38,9 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email);
     }
 
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
     @Transactional
     public User createNewUser(RegistrationUserDTO registrationUserDto) {
         User user = new User();
