@@ -1,66 +1,62 @@
 package com.controller;
 
-import com.DTO.ApplicationDTO;
-import com.DTO.PaymentDTO;
-import com.service.ApplicationService;
-import com.service.PaymentService;
-import com.repo.UserRepository;
+import com.DTO.StudentDataDTO;
 import com.entity.User;
+import com.repo.UserRepository;
+import com.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/student")
-@PreAuthorize("hasRole('ROLE_USER')")
+@RequestMapping("/students")
 public class StudentController {
 
     private final UserRepository userRepository;
-    private final PaymentService paymentService;
-    private final ApplicationService applicationService;
+    private final StudentService studentService;
 
-    @GetMapping("/payments")
-    public ResponseEntity<List<PaymentDTO>> getMyPayments() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        List<PaymentDTO> payments = paymentService.getAllPayments().stream()
-                .filter(paymentDTO -> paymentDTO.getStudentPayments() != null &&
-                        paymentDTO.getStudentPayments().stream().anyMatch(sp -> sp.getStudentId().equals(currentUser.getId())))
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
+    public ResponseEntity<List<StudentDataDTO>> getAllStudents() {
+        List<User> students = userRepository.findByRoleName("ROLE_USER");
+        List<StudentDataDTO> studentData = students.stream()
+                .map(StudentDataDTO::fromUserAndDetails)
                 .collect(Collectors.toList());
-
-        return ResponseEntity.ok(payments);
+        return ResponseEntity.ok(studentData);
     }
 
-    @PostMapping("/applications")
-    public ResponseEntity<ApplicationDTO> createApplication(@RequestBody Map<String, Integer> request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Integer month = request.get("month");
-        Integer year = request.get("year");
-
-        ApplicationDTO newApplication = applicationService.createApplication(currentUser.getId(), month, year);
-        return ResponseEntity.ok(newApplication);
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
+    public ResponseEntity<StudentDataDTO> getStudentById(@PathVariable Long id) {
+        StudentDataDTO student = studentService.getStudentById(id);
+        return ResponseEntity.ok(student);
     }
 
-    @GetMapping("/applications")
-    public ResponseEntity<List<ApplicationDTO>> getMyApplications() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
+    public ResponseEntity<List<StudentDataDTO>> searchStudentsByName(@RequestParam String name) {
+        List<StudentDataDTO> foundStudents = studentService.findStudentsByName(name);
+        return ResponseEntity.ok(foundStudents);
+    }
 
-        List<ApplicationDTO> applications = applicationService.getStudentApplications(currentUser.getId());
-        return ResponseEntity.ok(applications);
+    @GetMapping("/filter")
+    @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
+    public ResponseEntity<List<StudentDataDTO>> filterStudents(@RequestParam(required = false) Boolean hasNoRetakes,
+                                                               @RequestParam(required = false) Boolean lessThan11AbsenceHours,
+                                                               @RequestParam(required = false) Boolean gpaNotLowerThan5) {
+        List<StudentDataDTO> filteredStudents = studentService.filterStudents(hasNoRetakes, lessThan11AbsenceHours, gpaNotLowerThan5);
+        return ResponseEntity.ok(filteredStudents);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_DEAN_EMPLOYEE')")
+    public ResponseEntity<StudentDataDTO> updateStudentDetails(@PathVariable Long id, @RequestBody StudentDataDTO studentDataDTO) {
+        StudentDataDTO updatedStudent = studentService.updateStudentDetails(id, studentDataDTO);
+        return ResponseEntity.ok(updatedStudent);
     }
 }

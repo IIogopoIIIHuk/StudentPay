@@ -35,11 +35,12 @@ public class StipendService {
         return stipendSettingsRepository.save(existingSettings);
     }
 
-    public Stipend updateStipendAmount(Long stipendId, Double newAmount) {
-        Stipend stipend = stipendRepository.findById(stipendId)
-                .orElseThrow(() -> new RuntimeException("Stipend not found"));
-        stipend.setAmount(newAmount);
-        return stipendRepository.save(stipend);
+    public Optional<Stipend> updateStipendAmount(Long stipendId, Double newAmount) {
+        return stipendRepository.findById(stipendId)
+                .map(stipend -> {
+                    stipend.setAmount(newAmount);
+                    return stipendRepository.save(stipend);
+                });
     }
 
     public Optional<Stipend> findByTypeName(String typeName) {

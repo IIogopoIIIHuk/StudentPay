@@ -1,6 +1,5 @@
 package com.config;
 
-
 import com.service.UserService;
 import com.utils.JwtTokenUtils;
 import org.springframework.context.annotation.Bean;
@@ -10,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,7 +29,6 @@ import java.util.List;
 public class SecurityConfig {
     private final UserService userService;
     private final JwtRequestFilter jwtRequestFilter;
-
 
     public SecurityConfig(@Lazy UserService userService, @Lazy JwtRequestFilter jwtRequestFilter){
         this.userService = userService;
@@ -62,6 +59,7 @@ public class SecurityConfig {
                     return corsConfiguration;
                 }))
                 .authorizeHttpRequests(auth -> auth
+                        // Эти пути остаются открытыми
                         .requestMatchers("/auth", "/registration").permitAll()
                         .requestMatchers(
                                 "/groups",
@@ -70,15 +68,20 @@ public class SecurityConfig {
                                 "/notes/**",
                                 "/absences/**",
                                 "/teachers/**",
-                                "/students/**",
                                 "/subjects/**",
                                 "/img/notes/**",
                                 "/stats/**"
                         ).permitAll()
                         .requestMatchers("/img/**").permitAll()
-                        .requestMatchers("/dean/**").hasRole("DEAN_EMPLOYEE")
-                        .requestMatchers("/accountant/**").hasRole("ACCOUNTANT")
-                        .requestMatchers("/student/**").hasRole("USER")
+                        // Все новые контроллеры защищены и требуют аутентификации
+                        .requestMatchers(
+                                "/payments/**",
+                                "/students/**",
+                                "/stipends/**",
+                                "/applications/**",
+                                "/documentation/**"
+                        ).authenticated()
+                        // Оставшиеся старые пути, которые мы не перенесли
                         .requestMatchers(
                                 "/groups/**",
                                 "/reservations/**",
