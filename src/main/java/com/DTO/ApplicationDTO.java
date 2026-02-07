@@ -3,6 +3,7 @@ package com.DTO;
 import com.entity.Application;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,8 +28,13 @@ public class ApplicationDTO {
         dto.setYearOfRequest(application.getYearOfRequest());
         dto.setStatus(application.getStatus());
 
-        if (application.getPdfDocument() != null) {
-            dto.setDocumentUrl("/applications/" + application.getId() + "/download");
+        if (application.getPdfDocument() != null && application.getPdfDocument().length > 0) {
+            String fullUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/applications/download/")
+                    .path(application.getId().toString())
+                    .toUriString();
+
+            dto.setDocumentUrl(fullUrl);
         }
         return dto;
     }

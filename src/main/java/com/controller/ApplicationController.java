@@ -79,12 +79,12 @@ public class ApplicationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{id}/download")
-    @PreAuthorize("hasAnyRole('ROLE_ACCOUNTANT', 'ROLE_USER')")
+    @GetMapping("/download/{id}")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id) {
         return applicationRepository.findById(id)
+                .filter(app -> app.getPdfDocument() != null)
                 .map(app -> ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"doc.pdf\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"doc_" + id + ".pdf\"")
                         .contentType(MediaType.APPLICATION_PDF)
                         .body(app.getPdfDocument()))
                 .orElse(ResponseEntity.notFound().build());

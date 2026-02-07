@@ -26,8 +26,13 @@ public class DocumentationController {
 
     @PostMapping("/report")
     @PreAuthorize("hasAnyRole('ROLE_ACCOUNTANT', 'ROLE_DEAN_EMPLOYEE')")
-    public ResponseEntity<DocumentationResponseDTO> getReport(@RequestBody ReportRequest req) {
-        return ResponseEntity.ok(paymentService.getDocumentationData(req.getMonth(), req.getYear(), req.getStudentId()));
+    public ResponseEntity<DocumentationResponseDTO> getReport(@RequestBody ReportRequest request) {
+        DocumentationResponseDTO response = paymentService.getDocumentationData(
+                request.getMonth(),
+                request.getYear(),
+                request.getStudentId()
+        );
+        return ResponseEntity.ok(response);
     }
 
     @Data
