@@ -61,6 +61,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Эти пути остаются открытыми
                         .requestMatchers("/auth", "/registration").permitAll()
+                        .requestMatchers("/applications/download/**").permitAll()
                         .requestMatchers(
                                 "/groups",
                                 "/groups/{id}",
@@ -73,7 +74,6 @@ public class SecurityConfig {
                                 "/stats/**"
                         ).permitAll()
                         .requestMatchers("/img/**").permitAll()
-                        // Все новые контроллеры защищены и требуют аутентификации
                         .requestMatchers(
                                 "/payments/**",
                                 "/students/**",
@@ -81,7 +81,6 @@ public class SecurityConfig {
                                 "/applications/**",
                                 "/documentation/**"
                         ).authenticated()
-                        // Оставшиеся старые пути, которые мы не перенесли
                         .requestMatchers(
                                 "/groups/**",
                                 "/reservations/**",

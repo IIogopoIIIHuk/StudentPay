@@ -1,7 +1,10 @@
 package com.controller;
 
+import com.DTO.DocumentationResponseDTO;
 import com.DTO.StudentDataDTO;
+import com.service.PaymentService;
 import com.service.PdfService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +21,26 @@ import java.util.List;
 public class DocumentationController {
 
     private final PdfService pdfService;
+
+    private final PaymentService paymentService;
+
+    @PostMapping("/report")
+    @PreAuthorize("hasAnyRole('ROLE_ACCOUNTANT', 'ROLE_DEAN_EMPLOYEE')")
+    public ResponseEntity<DocumentationResponseDTO> getReport(@RequestBody ReportRequest request) {
+        DocumentationResponseDTO response = paymentService.getDocumentationData(
+                request.getMonth(),
+                request.getYear(),
+                request.getStudentId()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @Data
+    public static class ReportRequest {
+        private Integer month;
+        private Integer year;
+        private Long studentId;
+    }
 
     @GetMapping("/download/general")
     @PreAuthorize("hasRole('ROLE_ACCOUNTANT')")
