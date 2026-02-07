@@ -25,7 +25,7 @@ public class Application {
     private Integer yearOfRequest;
 
     @Column(name = "status")
-    private String status = "ожидает ответа"; // Дефолтный статус
+    private String status = "Ожидает ответа"; // Дефолтный статус
 
     @Lob
     @Column(name = "pdf_document")
