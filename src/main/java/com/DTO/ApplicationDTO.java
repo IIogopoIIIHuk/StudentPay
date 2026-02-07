@@ -16,6 +16,7 @@ public class ApplicationDTO {
     private Integer monthOfRequest;
     private Integer yearOfRequest;
     private String status;
+    private String documentUrl;
 
     public static ApplicationDTO fromEntity(Application application) {
         ApplicationDTO dto = new ApplicationDTO();
@@ -25,6 +26,10 @@ public class ApplicationDTO {
         dto.setMonthOfRequest(application.getMonthOfRequest());
         dto.setYearOfRequest(application.getYearOfRequest());
         dto.setStatus(application.getStatus());
+
+        if (application.getPdfDocument() != null) {
+            dto.setDocumentUrl("/applications/" + application.getId() + "/download");
+        }
         return dto;
     }
 }

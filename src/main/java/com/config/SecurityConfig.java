@@ -73,7 +73,6 @@ public class SecurityConfig {
                                 "/stats/**"
                         ).permitAll()
                         .requestMatchers("/img/**").permitAll()
-                        // Все новые контроллеры защищены и требуют аутентификации
                         .requestMatchers(
                                 "/payments/**",
                                 "/students/**",
@@ -81,7 +80,6 @@ public class SecurityConfig {
                                 "/applications/**",
                                 "/documentation/**"
                         ).authenticated()
-                        // Оставшиеся старые пути, которые мы не перенесли
                         .requestMatchers(
                                 "/groups/**",
                                 "/reservations/**",

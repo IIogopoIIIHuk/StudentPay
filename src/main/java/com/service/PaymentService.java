@@ -1,5 +1,6 @@
 package com.service;
 
+import com.DTO.DocumentationResponseDTO;
 import com.DTO.PaymentDTO;
 import com.DTO.StudentPaymentDTO;
 import com.entity.*;
@@ -165,5 +166,60 @@ public class PaymentService {
         LocalDate now = LocalDate.now();
         LocalDate previousMonth = now.minusMonths(1);
         return previousMonth.getMonth().name();
+    }
+
+    // Добавить в импорты: import java.time.YearMonth;
+// и DocumentationResponseDTO со всеми вложенными классами
+
+    public DocumentationResponseDTO getDocumentationData(int month, int year, Long studentId) {
+        YearMonth ym = YearMonth.of(year, month);
+        Payment payment = paymentRepository.findAllByPaymentDateBetween(ym.atDay(1), ym.atEndOfMonth())
+                .stream().findFirst()
+                .orElseThrow(() -> new RuntimeException("Ведомость не найдена"));
+
+        if (studentId == null) {
+            // Общий список
+            List<DocumentationResponseDTO.StudentSummaryDTO> summary = payment.getStudentPayments().stream()
+                    .map(sp -> new DocumentationResponseDTO.StudentSummaryDTO(
+                            sp.getStudent().getId(),
+                            sp.getStudent().getName(),
+                            sp.getAmount()))
+                    .toList();
+
+            return DocumentationResponseDTO.builder()
+                    .paymentDate(payment.getPaymentDate())
+                    .totalAmount(payment.getTotalAmount())
+                    .students(summary)
+                    .build();
+        } else {
+            // Личная выписка
+            StudentPayment sp = payment.getStudentPayments().stream()
+                    .filter(p -> p.getStudent().getId().equals(studentId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Студент не найден в этом месяце"));
+
+            User u = sp.getStudent();
+            Stipend stipend = stipendService.findByTypeName(u.getStudentDetails().getStipendType())
+                    .orElseThrow(() -> new RuntimeException("Стипендия не определена"));
+            StipendSettings settings = stipendService.getStipendSettings().get();
+
+            double base = stipend.getAmount();
+            double prof = u.isProfkomMember() ? base * (settings.getProfkomDeductionPercent() / 100) : 0;
+            double brsm = u.isBrsmMember() ? base * (settings.getBrsmDeductionPercent() / 100) : 0;
+
+            return DocumentationResponseDTO.builder()
+                    .paymentDate(payment.getPaymentDate())
+                    .student(new DocumentationResponseDTO.StudentInfoDTO(u.getId(), u.getName(), "ПИ-201"))
+                    .calculations(DocumentationResponseDTO.CalculationDetailsDTO.builder()
+                            .baseScholarship(base)
+                            .bonus(u.getStudentDetails().getBonusAmount())
+                            .profcomPercent(settings.getProfkomDeductionPercent())
+                            .brsmPercentage(settings.getBrsmDeductionPercent())
+                            .profcomDeduction(prof)
+                            .brsmDeduction(brsm)
+                            .totalAmount(sp.getAmount())
+                            .build())
+                    .build();
+        }
     }
 }

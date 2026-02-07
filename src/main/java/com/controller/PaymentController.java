@@ -33,6 +33,7 @@ public class PaymentController {
         }
     }
 
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_ACCOUNTANT', 'ROLE_DEAN_EMPLOYEE')")
     public ResponseEntity<List<PaymentDTO>> getAllPayments(@RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year) {

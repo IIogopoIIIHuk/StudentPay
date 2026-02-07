@@ -57,9 +57,9 @@ public class ApplicationService {
 
     @Transactional
     public Optional<ApplicationDTO> attachPdfToApplication(Long id, byte[] pdfBytes) {
-        return applicationRepository.findById(id).map(application -> {
+        return applicationRepository.findById(id    ).map(application -> {
             application.setPdfDocument(pdfBytes);
-            application.setStatus("закрыт");
+            application.setStatus("Закрыт");
             return ApplicationDTO.fromEntity(applicationRepository.save(application));
         });
     }
