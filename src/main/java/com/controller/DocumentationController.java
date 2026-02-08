@@ -2,18 +2,21 @@ package com.controller;
 
 import com.DTO.DocumentationResponseDTO;
 import com.DTO.StudentDataDTO;
+import com.exception.AppError;
 import com.service.PaymentService;
 import com.service.PdfService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,15 +29,32 @@ public class DocumentationController {
 
     @PostMapping("/report")
     @PreAuthorize("hasAnyRole('ROLE_ACCOUNTANT', 'ROLE_DEAN_EMPLOYEE')")
-    public ResponseEntity<DocumentationResponseDTO> getReport(@RequestBody ReportRequest request) {
-        DocumentationResponseDTO response = paymentService.getDocumentationData(
-                request.getMonth(),
-                request.getYear(),
-                request.getStudentId()
-        );
-        return ResponseEntity.ok(response);
-    }
+    public ResponseEntity<?> getReport(@RequestBody ReportRequest request) {
+        try {
+            DocumentationResponseDTO data = paymentService.getDocumentationData(
+                    request.getMonth(),
+                    request.getYear(),
+                    request.getStudentId()
+            );
+            return ResponseEntity.ok(data);
 
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(
+                    new AppError(HttpStatus.NOT_FOUND.value(), e.getMessage()),
+                    HttpStatus.NOT_FOUND
+            );
+        } catch (IllegalStateException e) {
+            return new ResponseEntity<>(
+                    new AppError(HttpStatus.BAD_REQUEST.value(), e.getMessage()),
+                    HttpStatus.BAD_REQUEST
+            );
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    new AppError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Произошла внутренняя ошибка сервера"),
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
     @Data
     public static class ReportRequest {
         private Integer month;

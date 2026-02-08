@@ -39,4 +39,22 @@ public class PaymentDTO {
         }
         return dto;
     }
+
+    public static PaymentDTO fromEntityForStudent(Payment payment, Long studentId) {
+        PaymentDTO dto = new PaymentDTO(
+                payment.getId(),
+                payment.getPaymentName(),
+                payment.getTotalAmount(),
+                payment.getPaymentDate(),
+                payment.getStatus()
+        );
+
+        if (payment.getStudentPayments() != null) {
+            dto.setStudentPayments(payment.getStudentPayments().stream()
+                    .filter(sp -> sp.getStudent().getId().equals(studentId))
+                    .map(StudentPaymentDTO::fromEntity)
+                    .collect(java.util.stream.Collectors.toList()));
+        }
+        return dto;
+    }
 }

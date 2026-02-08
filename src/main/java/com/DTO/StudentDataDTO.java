@@ -12,6 +12,9 @@ public class StudentDataDTO {
 
     private Long id;
     private String name;
+    private String login;
+    private String phone;
+    private String email;
     private Double gpa;
     private Integer absencesHours;
     private Boolean hasRetakes;
@@ -29,6 +32,9 @@ public class StudentDataDTO {
         StudentDataDTO dto = new StudentDataDTO();
         dto.setId(user.getId());
         dto.setName(user.getName());
+        dto.setLogin(user.getUsername());
+        dto.setPhone(user.getPhone());
+        dto.setEmail(user.getEmail());
         dto.setGpa(user.getStudentDetails().getGpa());
         dto.setAbsencesHours(user.getStudentDetails().getAbsencesHours());
         dto.setHasRetakes(user.getStudentDetails().getHasRetakes());

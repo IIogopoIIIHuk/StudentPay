@@ -4,12 +4,15 @@ import com.DTO.DocumentationResponseDTO;
 import com.DTO.PaymentDTO;
 import com.DTO.StudentPaymentDTO;
 import com.entity.*;
+import com.exception.AppError;
 import com.repo.PaymentRepository;
 import com.repo.StudentPaymentRepository;
 import com.repo.StipendRepository;
 import com.repo.StipendSettingsRepository;
 import com.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +21,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -127,16 +131,20 @@ public class PaymentService {
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startOfMonth = yearMonth.atDay(1);
         LocalDate endOfMonth = yearMonth.atEndOfMonth();
-        return paymentRepository.findAllByPaymentDateBetween(startOfMonth, endOfMonth).stream()
+        return paymentRepository.findByPaymentDateBetween(startOfMonth, endOfMonth).stream()
                 .map(PaymentDTO::fromEntity)
                 .collect(Collectors.toList());
     }
 
     public List<PaymentDTO> getMyPaymentsByDate(Long studentId, int month, int year) {
-        List<PaymentDTO> allPayments = getPaymentsByDate(month, year);
-        return allPayments.stream()
-                .filter(paymentDTO -> paymentDTO.getStudentPayments().stream()
-                        .anyMatch(sp -> sp.getStudentId().equals(studentId)))
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
+
+        return paymentRepository.findAllByPaymentDateBetween(start, end).stream()
+                .filter(p -> p.getStudentPayments().stream()
+                        .anyMatch(sp -> sp.getStudent().getId().equals(studentId)))
+                .map(p -> PaymentDTO.fromEntityForStudent(p, studentId))
                 .collect(Collectors.toList());
     }
 
@@ -144,7 +152,7 @@ public class PaymentService {
         return paymentRepository.findAll().stream()
                 .filter(payment -> payment.getStudentPayments() != null &&
                         payment.getStudentPayments().stream().anyMatch(sp -> sp.getStudent().getId().equals(studentId)))
-                .map(PaymentDTO::fromEntity)
+                .map(p -> PaymentDTO.fromEntityForStudent(p, studentId))
                 .collect(Collectors.toList());
     }
 
@@ -168,17 +176,14 @@ public class PaymentService {
         return previousMonth.getMonth().name();
     }
 
-    // Добавить в импорты: import java.time.YearMonth;
-// и DocumentationResponseDTO со всеми вложенными классами
-
     public DocumentationResponseDTO getDocumentationData(int month, int year, Long studentId) {
         YearMonth ym = YearMonth.of(year, month);
+
         Payment payment = paymentRepository.findAllByPaymentDateBetween(ym.atDay(1), ym.atEndOfMonth())
                 .stream().findFirst()
-                .orElseThrow(() -> new RuntimeException("Ведомость не найдена"));
+                .orElseThrow(() -> new NoSuchElementException("Ведомость за " + month + "." + year + " не найдена."));
 
         if (studentId == null) {
-            // Общий список
             List<DocumentationResponseDTO.StudentSummaryDTO> summary = payment.getStudentPayments().stream()
                     .map(sp -> new DocumentationResponseDTO.StudentSummaryDTO(
                             sp.getStudent().getId(),
@@ -192,16 +197,22 @@ public class PaymentService {
                     .students(summary)
                     .build();
         } else {
-            // Личная выписка
             StudentPayment sp = payment.getStudentPayments().stream()
                     .filter(p -> p.getStudent().getId().equals(studentId))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Студент не найден в этом месяце"));
+                    .orElseThrow(() -> new NoSuchElementException("Данные по студенту с ID " + studentId + " за этот период отсутствуют."));
 
             User u = sp.getStudent();
+
+            if (u.getStudentDetails() == null || u.getStudentDetails().getStipendType() == null) {
+                throw new IllegalStateException("У студента не настроены данные о стипендии.");
+            }
+
             Stipend stipend = stipendService.findByTypeName(u.getStudentDetails().getStipendType())
-                    .orElseThrow(() -> new RuntimeException("Стипендия не определена"));
-            StipendSettings settings = stipendService.getStipendSettings().get();
+                    .orElseThrow(() -> new NoSuchElementException("Тип стипендии '" + u.getStudentDetails().getStipendType() + "' не найден в справочнике."));
+
+            StipendSettings settings = stipendService.getStipendSettings()
+                    .orElseThrow(() -> new NoSuchElementException("Настройки процентов (Профком/БРСМ) не заданы."));
 
             double base = stipend.getAmount();
             double prof = u.isProfkomMember() ? base * (settings.getProfkomDeductionPercent() / 100) : 0;
