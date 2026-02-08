@@ -52,14 +52,12 @@ public class StipendController {
 
     @PutMapping("/settings")
     @PreAuthorize("hasRole('ROLE_DEAN_EMPLOYEE')")
-    public StipendSettingsDTO updateStipendSettings(StipendSettingsDTO settingsDTO) {
-        StipendSettings existingSettings = stipendSettingsRepository.findById(1L)
-                .orElse(new StipendSettings());
+    public ResponseEntity<StipendSettingsDTO> updateStipendSettings(@RequestBody StipendSettingsDTO settingsDTO) {
+        StipendSettings settings = new StipendSettings();
+        settings.setProfkomDeductionPercent(settingsDTO.getProfkomDeductionPercent());
+        settings.setBrsmDeductionPercent(settingsDTO.getBrsmDeductionPercent());
 
-        existingSettings.setProfkomDeductionPercent(settingsDTO.getProfkomDeductionPercent());
-        existingSettings.setBrsmDeductionPercent(settingsDTO.getBrsmDeductionPercent());
-
-        StipendSettings savedSettings = stipendSettingsRepository.save(existingSettings);
-        return StipendSettingsDTO.fromEntity(savedSettings);
+        StipendSettings savedSettings = stipendService.updateStipendSettings(settings);
+        return ResponseEntity.ok(StipendSettingsDTO.fromEntity(savedSettings));
     }
 }

@@ -33,14 +33,12 @@ public class ApplicationService {
     }
 
 
-    // Новый метод
     public List<ApplicationDTO> getAllApplications() {
         return applicationRepository.findAll().stream()
                 .map(ApplicationDTO::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    // Новый метод
     public List<ApplicationDTO> getApplicationsByStudentId(Long studentId) {
         return applicationRepository.findByStudentId(studentId).stream()
                 .map(ApplicationDTO::fromEntity)

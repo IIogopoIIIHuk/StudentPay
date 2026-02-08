@@ -4,6 +4,7 @@ import com.entity.Stipend;
 import com.entity.StipendSettings;
 import com.repo.StipendRepository;
 import com.repo.StipendSettingsRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ public class StipendService {
         return stipendSettingsRepository.findById(1L);
     }
 
+    @Transactional
     public StipendSettings updateStipendSettings(StipendSettings settings) {
         StipendSettings existingSettings = stipendSettingsRepository.findById(1L)
                 .orElse(new StipendSettings());
