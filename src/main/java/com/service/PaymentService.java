@@ -19,10 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -172,8 +170,11 @@ public class PaymentService {
 
     private String getPreviousMonthName() {
         LocalDate now = LocalDate.now();
-        LocalDate previousMonth = now.minusMonths(1);
-        return previousMonth.getMonth().name();
+        LocalDate targetDate = now.minusMonths(0);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("LLLL", new Locale("ru"));
+
+        return targetDate.format(formatter).toUpperCase();
     }
 
     public DocumentationResponseDTO getDocumentationData(int month, int year, Long studentId) {
