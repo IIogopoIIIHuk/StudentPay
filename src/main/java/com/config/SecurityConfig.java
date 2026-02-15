@@ -79,7 +79,8 @@ public class SecurityConfig {
                                 "/students/**",
                                 "/stipends/**",
                                 "/applications/**",
-                                "/documentation/**"
+                                "/documentation/**",
+                                "/analytics/**"
                         ).authenticated()
                         .requestMatchers(
                                 "/groups/**",

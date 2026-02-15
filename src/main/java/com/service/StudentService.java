@@ -1,5 +1,7 @@
 package com.service;
 
+import com.DTO.AnalyticsResponseDTO;
+import com.DTO.StipendTypeStatDTO;
 import com.DTO.StudentDataDTO;
 import com.entity.StudentDetails;
 import com.entity.User;
@@ -72,7 +74,6 @@ public class StudentService {
         return StudentDataDTO.fromUserAndDetails(user);
     }
 
-    // Добавляем новый метод в com.service.StudentService.java
     public StudentDataDTO getStudentById(Long id) {
         return userRepository.findById(id)
                 .filter(user -> user.getRoles().stream().anyMatch(role -> "ROLE_USER".equals(role.getName())))
@@ -108,5 +109,31 @@ public class StudentService {
                 })
                 .map(StudentDataDTO::fromUserAndDetails)
                 .collect(Collectors.toList());
+    }
+
+    public AnalyticsResponseDTO getStipendAnalytics() {
+        List<User> students = userRepository.findByRoleName("ROLE_USER");
+
+        List<StudentDetails> studentsWithStipend = students.stream()
+                .map(User::getStudentDetails)
+                .filter(details -> details != null && details.getHasStipend())
+                .toList();
+
+        int totalCount = studentsWithStipend.size();
+
+        List<StipendTypeStatDTO> stats = studentsWithStipend.stream()
+                .collect(Collectors.groupingBy(StudentDetails::getStipendType, Collectors.counting()))
+                .entrySet().stream()
+                .map(entry -> {
+                    double percent = (totalCount > 0) ? (entry.getValue() * 100.0 / totalCount) : 0.0;
+                    percent = Math.round(percent * 100.0) / 100.0;
+                    return new StipendTypeStatDTO(entry.getKey(), entry.getValue(), percent);
+                })
+                .collect(Collectors.toList());
+
+        return AnalyticsResponseDTO.builder()
+                .statistics(stats)
+                .totalStudentsWithStipend(totalCount)
+                .build();
     }
 }
