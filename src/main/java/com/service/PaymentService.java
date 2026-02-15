@@ -38,6 +38,15 @@ public class PaymentService {
         return paymentRepository.findByPaymentDateBetween(startOfMonth, endOfMonth).isPresent();
     }
 
+
+    public boolean canCreatePayment() {
+        YearMonth currentMonth = YearMonth.now();
+        LocalDate startOfMonth = currentMonth.atDay(1);
+        LocalDate endOfMonth = currentMonth.atEndOfMonth();
+
+        return paymentRepository.findByPaymentDateBetween(startOfMonth, endOfMonth).isEmpty();
+    }
+
     @Transactional
     public PaymentDTO calculateAndCreateMonthlyPayment() {
         if (hasPaymentForCurrentMonth()) {

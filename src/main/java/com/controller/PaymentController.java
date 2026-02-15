@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -31,6 +32,14 @@ public class PaymentController {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
+    }
+
+
+    @GetMapping("/can-calculate")
+    @PreAuthorize("hasRole('ROLE_ACCOUNTANT')")
+    public ResponseEntity<Map<String, Boolean>> checkCalculationStatus() {
+        boolean canCalculate = paymentService.canCreatePayment();
+        return ResponseEntity.ok(Map.of("canCalculate", canCalculate));
     }
 
 
