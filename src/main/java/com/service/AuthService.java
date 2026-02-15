@@ -3,12 +3,10 @@ package com.service;
 import com.DTO.JwtRequest;
 import com.DTO.JwtResponse;
 import com.DTO.RegistrationUserDTO;
-import com.exception.ErrorResponse;
 import com.DTO.UserDTO;
 import com.entity.Role;
 import com.entity.User;
 import com.exception.AppError;
-import com.repo.RoleRepository;
 import com.repo.UserRepository;
 import com.utils.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +23,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.apache.catalina.realm.UserDatabaseRealm.getRoles;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -35,9 +31,6 @@ public class AuthService {
     private final JwtTokenUtils jwtTokenUtils;
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
-    private final RoleService roleService;
-    private final RoleRepository roleRepository;
-
 
     public ResponseEntity<?> createAuthToken(JwtRequest authRequest) {
         try {
@@ -45,26 +38,24 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
             );
         } catch (BadCredentialsException e) {
-            return new ResponseEntity<>(new ErrorResponse(true, "Неверный логин или пароль"), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(new AppError(HttpStatus.UNAUTHORIZED.value(), "Неверный логин или пароль"), HttpStatus.UNAUTHORIZED);
         }
 
-        User user = userRepository.findByUsername(authRequest.getUsername())
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        User user = userRepository.findByUsername(authRequest.getUsername()).orElse(null);
+        if (user == null) {
+            return new ResponseEntity<>(new AppError(HttpStatus.NOT_FOUND.value(), "Пользователь не найден"), HttpStatus.NOT_FOUND);
+        }
 
         if (!user.isEnabled()) {
-            return new ResponseEntity<>(new ErrorResponse(true, "Ваш аккаунт ещё не одобрен. Пожалуйста, дождитесь активации."), HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(new AppError(HttpStatus.FORBIDDEN.value(), "Ваш аккаунт ещё не одобрен. Пожалуйста, дождитесь активации."), HttpStatus.FORBIDDEN);
         }
 
         UserDetails userDetails = loadUserByUsername(authRequest.getUsername());
         String token = jwtTokenUtils.generateToken(userDetails);
-
-        List<String> roles = user.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toList());
+        List<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toList());
 
         return ResponseEntity.ok(new JwtResponse(token, roles));
     }
-
 
     public ResponseEntity<?> createNewUser(RegistrationUserDTO registrationUserDTO) {
         if (userService.findByUsername(registrationUserDTO.getUsername()).isPresent() ||
@@ -72,26 +63,15 @@ public class AuthService {
             return new ResponseEntity<>(new AppError(HttpStatus.BAD_REQUEST.value(), "Пользователь с указанными данными уже существует"), HttpStatus.BAD_REQUEST);
         }
         User user = userService.createNewUser(registrationUserDTO);
-
         return ResponseEntity.ok(new UserDTO(user.getId(), user.getUsername(), user.getEmail(), user.getName(), user.getPhone()));
     }
-
 
     public UserDetails loadUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
-
-        log.info("Роли в UserDetails (из loadUserByUsername): {}", authorities);
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                authorities
-        );
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
     }
-
 }

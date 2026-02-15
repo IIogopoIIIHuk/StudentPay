@@ -2,6 +2,7 @@ package com.controller;
 
 import com.DTO.PaymentDTO;
 import com.entity.User;
+import com.exception.AppError;
 import com.repo.UserRepository;
 import com.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +31,11 @@ public class PaymentController {
             PaymentDTO payment = paymentService.calculateAndCreateMonthlyPayment();
             return ResponseEntity.ok(payment);
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            return new ResponseEntity<>(new AppError(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new AppError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Ошибка при расчете: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     @GetMapping("/can-calculate")
     @PreAuthorize("hasRole('ROLE_ACCOUNTANT')")
@@ -54,10 +56,12 @@ public class PaymentController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ACCOUNTANT', 'ROLE_DEAN_EMPLOYEE')")
-    public ResponseEntity<PaymentDTO> getPaymentDetails(@PathVariable Long id) {
-        return paymentService.getPaymentDetails(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> getPaymentDetails(@PathVariable Long id) {
+        Optional<PaymentDTO> payment = paymentService.getPaymentDetails(id);
+        if (payment.isEmpty()) {
+            return new ResponseEntity<>(new AppError(HttpStatus.NOT_FOUND.value(), "Ведомость с ID " + id + " не найдена"), HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok(payment.get());
     }
 
     @PutMapping("/{id}/status")

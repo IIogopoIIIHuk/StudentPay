@@ -31,28 +31,18 @@ public class DocumentationController {
     @PreAuthorize("hasAnyRole('ROLE_ACCOUNTANT', 'ROLE_DEAN_EMPLOYEE')")
     public ResponseEntity<?> getReport(@RequestBody ReportRequest request) {
         try {
-            DocumentationResponseDTO data = paymentService.getDocumentationData(
+            DocumentationResponseDTO response = paymentService.getDocumentationData(
                     request.getMonth(),
                     request.getYear(),
                     request.getStudentId()
             );
-            return ResponseEntity.ok(data);
-
+            return ResponseEntity.ok(response);
         } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(
-                    new AppError(HttpStatus.NOT_FOUND.value(), e.getMessage()),
-                    HttpStatus.NOT_FOUND
-            );
+            return new ResponseEntity<>(new AppError(HttpStatus.NOT_FOUND.value(), e.getMessage()), HttpStatus.NOT_FOUND);
         } catch (IllegalStateException e) {
-            return new ResponseEntity<>(
-                    new AppError(HttpStatus.BAD_REQUEST.value(), e.getMessage()),
-                    HttpStatus.BAD_REQUEST
-            );
+            return new ResponseEntity<>(new AppError(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return new ResponseEntity<>(
-                    new AppError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Произошла внутренняя ошибка сервера"),
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
+            return new ResponseEntity<>(new AppError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Внутренняя ошибка сервера"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @Data

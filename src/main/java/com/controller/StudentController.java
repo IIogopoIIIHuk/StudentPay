@@ -2,9 +2,11 @@ package com.controller;
 
 import com.DTO.StudentDataDTO;
 import com.entity.User;
+import com.exception.AppError;
 import com.repo.UserRepository;
 import com.service.StudentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,9 +34,13 @@ public class StudentController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
-    public ResponseEntity<StudentDataDTO> getStudentById(@PathVariable Long id) {
-        StudentDataDTO student = studentService.getStudentById(id);
-        return ResponseEntity.ok(student);
+    public ResponseEntity<?> getStudentById(@PathVariable Long id) {
+        try {
+            StudentDataDTO student = studentService.getStudentById(id);
+            return ResponseEntity.ok(student);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new AppError(HttpStatus.NOT_FOUND.value(), "Студент с ID " + id + " не найден"), HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/search")

@@ -219,10 +219,10 @@ public class PaymentService {
             }
 
             Stipend stipend = stipendService.findByTypeName(u.getStudentDetails().getStipendType())
-                    .orElseThrow(() -> new NoSuchElementException("Тип стипендии '" + u.getStudentDetails().getStipendType() + "' не найден в справочнике."));
+                    .orElseThrow(() -> new NoSuchElementException("Тип стипендии '" + u.getStudentDetails().getStipendType() + "' не найден."));
 
             StipendSettings settings = stipendService.getStipendSettings()
-                    .orElseThrow(() -> new NoSuchElementException("Настройки процентов (Профком/БРСМ) не заданы."));
+                    .orElseThrow(() -> new NoSuchElementException("Настройки процентов не заданы."));
 
             double base = stipend.getAmount();
             double prof = u.isProfkomMember() ? base * (settings.getProfkomDeductionPercent() / 100) : 0;
