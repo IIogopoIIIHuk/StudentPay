@@ -1,0 +1,1 @@
+ALTER TABLE applications MODIFY pdf_document LONGBLOB;

@@ -28,6 +28,6 @@ public class Application {
     private String status = "Ожидает ответа"; // Дефолтный статус
 
     @Lob
-    @Column(name = "pdf_document")
+    @Column(name = "pdf_document", columnDefinition = "LONGBLOB")
     private byte[] pdfDocument;
 }

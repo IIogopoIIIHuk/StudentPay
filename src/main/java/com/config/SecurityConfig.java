@@ -60,7 +60,7 @@ public class SecurityConfig {
                 }))
                 .authorizeHttpRequests(auth -> auth
                         // Эти пути остаются открытыми
-                        .requestMatchers("/auth", "/registration").permitAll()
+                        .requestMatchers("/auth", "/registration", "/error").permitAll()
                         .requestMatchers("/applications/download/**").permitAll()
                         .requestMatchers(
                                 "/groups",
