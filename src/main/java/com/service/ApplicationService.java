@@ -32,13 +32,20 @@ public class ApplicationService {
         return ApplicationDTO.fromEntity(savedApplication);
     }
 
-
+    @Transactional(readOnly = true)
     public List<ApplicationDTO> getAllApplications() {
         return applicationRepository.findAll().stream()
                 .map(ApplicationDTO::fromEntity)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public Optional<byte[]> getPdfBytes(Long id) {
+        return applicationRepository.findById(id)
+                .map(Application::getPdfDocument);
+    }
+
+    @Transactional(readOnly = true)
     public List<ApplicationDTO> getApplicationsByStudentId(Long studentId) {
         return applicationRepository.findByStudentId(studentId).stream()
                 .map(ApplicationDTO::fromEntity)
