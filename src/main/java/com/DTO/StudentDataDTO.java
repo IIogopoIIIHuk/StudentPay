@@ -1,6 +1,7 @@
 package com.DTO;
 
 import com.entity.User;
+import com.entity.Role;
 import com.entity.StudentDetails;
 import lombok.Data;
 
@@ -23,6 +24,7 @@ public class StudentDataDTO {
     private Boolean hasStipend;
     private Boolean isBrsmMember;
     private Boolean isProfkomMember;
+    private List<String> roles;
 
     public static StudentDataDTO fromUserAndDetails(User user) {
         if (user.getStudentDetails() == null) {
@@ -43,6 +45,10 @@ public class StudentDataDTO {
         dto.setHasStipend(user.getStudentDetails().getHasStipend());
         dto.setIsBrsmMember(user.isBrsmMember());
         dto.setIsProfkomMember(user.isProfkomMember());
+
+        if (user.getRoles() != null) {
+            dto.setRoles(user.getRoles().stream().map(Role::getName).toList());
+        }
 
         return dto;
     }

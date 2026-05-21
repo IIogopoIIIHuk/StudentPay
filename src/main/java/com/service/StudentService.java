@@ -3,8 +3,10 @@ package com.service;
 import com.DTO.AnalyticsResponseDTO;
 import com.DTO.StipendTypeStatDTO;
 import com.DTO.StudentDataDTO;
+import com.entity.Role;
 import com.entity.StudentDetails;
 import com.entity.User;
+import com.repo.RoleRepository;
 import com.repo.StudentDetailsRepository;
 import com.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +22,23 @@ public class StudentService {
 
     private final UserRepository userRepository;
     private final StudentDetailsRepository studentDetailsRepository;
+    private final RoleRepository roleRepository;
 
     @Transactional
     public StudentDataDTO updateStudentDetails(Long userId, StudentDataDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
+        // 1. Обновляем роли, если они переданы в запросе
+        if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+            List<Role> newRoles = dto.getRoles().stream()
+                    .map(roleName -> roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new RuntimeException("Роль " + roleName + " не найдена в БД")))
+                    .collect(Collectors.toList());
+            user.setRoles(newRoles);
+        }
+
+        // 2. Обновляем базовые данные аккаунта
         if (dto.getIsBrsmMember() != null) {
             user.setBrsmMember(dto.getIsBrsmMember());
         }
@@ -33,41 +46,47 @@ public class StudentService {
             user.setProfkomMember(dto.getIsProfkomMember());
         }
 
-        StudentDetails details = user.getStudentDetails();
-        if (details == null) {
-            details = new StudentDetails(user);
-        }
+        // 3. Проверяем: остался/стал ли пользователь студентом после обновления ролей?
+        boolean isStudent = user.getRoles().stream().anyMatch(role -> "ROLE_USER".equals(role.getName()));
 
-        if (dto.getGpa() != null) {
-            details.setGpa(dto.getGpa());
-        }
-        if (dto.getAbsencesHours() != null) {
-            details.setAbsencesHours(dto.getAbsencesHours());
-        }
-        if (dto.getHasRetakes() != null) {
-            details.setHasRetakes(dto.getHasRetakes());
-        }
-        if (dto.getStipendType() != null && !dto.getStipendType().isEmpty()) {
-            details.setStipendType(dto.getStipendType());
-        }
-        if (dto.getBonusAmount() != null) {
-            details.setBonusAmount(dto.getBonusAmount());
-        }
+        if (isStudent) {
+            // Если это студент — работаем с его учебной карточкой
+            StudentDetails details = user.getStudentDetails();
+            if (details == null) {
+                details = new StudentDetails(user);
+                user.setStudentDetails(details);
+            }
 
-        boolean hasStipend = true;
-        if (details.getHasRetakes()) {
-            hasStipend = false;
+            if (dto.getGpa() != null) details.setGpa(dto.getGpa());
+            if (dto.getAbsencesHours() != null) details.setAbsencesHours(dto.getAbsencesHours());
+            if (dto.getHasRetakes() != null) details.setHasRetakes(dto.getHasRetakes());
+            if (dto.getStipendType() != null && !dto.getStipendType().isEmpty()) {
+                details.setStipendType(dto.getStipendType());
+            }
+            if (dto.getBonusAmount() != null) details.setBonusAmount(dto.getBonusAmount());
+
+            // 4. Полностью безопасный расчет стипендии (с защитой от null)
+            boolean hasStipend = true;
+
+            if (details.getHasRetakes() != null && details.getHasRetakes()) {
+                hasStipend = false;
+            }
+            if (details.getGpa() != null && details.getGpa() < 5.0) {
+                hasStipend = false;
+            }
+            if (details.getAbsencesHours() != null && details.getAbsencesHours() > 10) {
+                hasStipend = false;
+            }
+            if ("Социальная стипендия".equals(details.getStipendType())) {
+                hasStipend = true;
+            }
+
+            details.setHasStipend(hasStipend);
+        } else {
+            // Если пользователь НЕ студент (например, перевели в бухгалтера ROLE_ACCOUNTANT),
+            // мы просто игнорируем расчеты стипендии.
+            // При желании старые детали можно удалить, но безопаснее просто оставить их в покое.
         }
-        if (details.getGpa() < 5.0) {
-            hasStipend = false;
-        }
-        if (details.getAbsencesHours() > 10) {
-            hasStipend = false;
-        }
-        if ("Социальная стипендия".equals(details.getStipendType())) {
-            hasStipend = true;
-        }
-        details.setHasStipend(hasStipend);
 
         userRepository.save(user);
 

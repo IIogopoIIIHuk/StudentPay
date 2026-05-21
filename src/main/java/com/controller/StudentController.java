@@ -43,6 +43,7 @@ public class StudentController {
         }
     }
 
+
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ROLE_DEAN_EMPLOYEE', 'ROLE_ACCOUNTANT')")
     public ResponseEntity<List<StudentDataDTO>> searchStudentsByName(@RequestParam String name) {
